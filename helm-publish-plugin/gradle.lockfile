@@ -3,9 +3,9 @@
 # This file is expected to be part of source control.
 # To regenerate this file, run: ./gradlew :helm-publish-plugin:dependencies --write-locks
 com.google.code.findbugs:jsr305:3.0.2=testRuntimeClasspath
-com.squareup.okhttp3:okhttp-jvm:5.5.0=runtimeClasspath,testRuntimeClasspath
-com.squareup.okhttp3:okhttp-tls:5.5.0=runtimeClasspath,testRuntimeClasspath
-com.squareup.okhttp3:okhttp:5.5.0=runtimeClasspath,testRuntimeClasspath
+com.squareup.okhttp3:okhttp-jvm:5.5.1=runtimeClasspath,testRuntimeClasspath
+com.squareup.okhttp3:okhttp-tls:5.5.1=runtimeClasspath,testRuntimeClasspath
+com.squareup.okhttp3:okhttp:5.5.1=runtimeClasspath,testRuntimeClasspath
 com.squareup.okio:okio-jvm:3.18.1=runtimeClasspath,testRuntimeClasspath
 com.squareup.okio:okio:3.18.1=runtimeClasspath,testRuntimeClasspath
 com.willowtreeapps.assertk:assertk-jvm:0.28.1=testRuntimeClasspath
