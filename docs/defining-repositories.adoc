@@ -73,6 +73,8 @@ with a message naming the repository:
 [source,groovy,role="primary"]
 .Groovy
 ----
+import io.github.build.extensions.oss.gradle.plugins.helm.command.tasks.HelmAddRepository
+
 tasks.named('helmAddExampleRepository', HelmAddRepository) {
     failIfExists = true
 }
@@ -81,6 +83,8 @@ tasks.named('helmAddExampleRepository', HelmAddRepository) {
 [source,kotlin,role="secondary"]
 .Kotlin
 ----
+import io.github.build.extensions.oss.gradle.plugins.helm.command.tasks.HelmAddRepository
+
 tasks.named<HelmAddRepository>("helmAddExampleRepository") {
     failIfExists.set(true)
 }
