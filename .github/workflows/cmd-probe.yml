@@ -1,0 +1,129 @@
+name: cmd probe
+
+on:
+  push:
+    branches:
+      - "scratch/**"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Record line endings, attributes and tested commit
+        shell: bash
+        run: |
+          git rev-parse HEAD
+          git ls-files --eol probe
+          echo "core.autocrlf=$(git config --get core.autocrlf || echo unset)"
+          od -c probe/fixed.bat | head -4
+
+      - name: Buggy control with FAILURES=1 (diagnostic only)
+        continue-on-error: true
+        shell: cmd
+        run: |
+          set "FAILURES=1"
+          set "LOG_FILE=%CD%\buggy.log"
+          set "COUNTER_FILE=%CD%\buggy.counter"
+          del "%COUNTER_FILE%" 2>nul
+          call probe\buggy.bat repo add example https://example.com
+          set "RC1=%ERRORLEVEL%"
+          set "C1="
+          if exist "%COUNTER_FILE%" set /p C1=<"%COUNTER_FILE%"
+          echo call1 exit=%RC1% counter=[%C1%]
+          call probe\buggy.bat repo add example https://example.com
+          set "RC2=%ERRORLEVEL%"
+          set "C2="
+          if exist "%COUNTER_FILE%" set /p C2=<"%COUNTER_FILE%"
+          echo call2 exit=%RC2% counter=[%C2%]
+          call probe\buggy.bat repo add example https://example.com
+          set "RC3=%ERRORLEVEL%"
+          set "C3="
+          if exist "%COUNTER_FILE%" set /p C3=<"%COUNTER_FILE%"
+          echo call3 exit=%RC3% counter=[%C3%]
+          echo == buggy control done, expected to look broken ==
+          exit /b 0
+
+      - name: Fixed control with FAILURES=1 (asserted)
+        shell: cmd
+        run: |
+          set "FAILURES=1"
+          set "LOG_FILE=%CD%\fixed1.log"
+          set "COUNTER_FILE=%CD%\fixed1.counter"
+          del "%COUNTER_FILE%" 2>nul
+          del "%LOG_FILE%" 2>nul
+          call probe\fixed.bat repo add example https://example.com
+          set "RC1=%ERRORLEVEL%"
+          set "C1="
+          if exist "%COUNTER_FILE%" set /p C1=<"%COUNTER_FILE%"
+          call probe\fixed.bat repo add example https://example.com
+          set "RC2=%ERRORLEVEL%"
+          set "C2="
+          if exist "%COUNTER_FILE%" set /p C2=<"%COUNTER_FILE%"
+          call probe\fixed.bat repo add example https://example.com
+          set "RC3=%ERRORLEVEL%"
+          set "C3="
+          if exist "%COUNTER_FILE%" set /p C3=<"%COUNTER_FILE%"
+          set "LINES="
+          if exist "%LOG_FILE%" for /f %%c in ('findstr /b /c:"repo add" "%LOG_FILE%" ^| find /c /v ""') do set "LINES=%%c"
+          echo fixed failures=1 exits=%RC1%,%RC2%,%RC3%
+          echo fixed failures=1 counters=%C1%,%C2%,%C3%
+          echo fixed failures=1 log lines=%LINES%
+          if not "%RC1%"=="1" ( echo expected first call to fail & exit /b 1 )
+          if not "%RC2%"=="0" ( echo expected second call to succeed & exit /b 1 )
+          if not "%RC3%"=="0" ( echo expected third call to succeed & exit /b 1 )
+          if not "%C1%"=="1" ( echo expected counter 1 after first call & exit /b 1 )
+          if not "%C2%"=="2" ( echo expected counter 2 after second call & exit /b 1 )
+          if not "%C3%"=="3" ( echo expected counter 3 after third call & exit /b 1 )
+          if not "%LINES%"=="3" ( echo expected three logged invocations & exit /b 1 )
+          echo == fixed failures=1 passed ==
+          exit /b 0
+
+      - name: Fixed control with FAILURES=10 (asserted)
+        shell: cmd
+        run: |
+          set "FAILURES=10"
+          set "LOG_FILE=%CD%\fixed10.log"
+          set "COUNTER_FILE=%CD%\fixed10.counter"
+          del "%COUNTER_FILE%" 2>nul
+          del "%LOG_FILE%" 2>nul
+          call probe\fixed.bat repo add example https://example.com
+          set "RC1=%ERRORLEVEL%"
+          set "C1="
+          if exist "%COUNTER_FILE%" set /p C1=<"%COUNTER_FILE%"
+          call probe\fixed.bat repo add example https://example.com
+          set "RC2=%ERRORLEVEL%"
+          set "C2="
+          if exist "%COUNTER_FILE%" set /p C2=<"%COUNTER_FILE%"
+          call probe\fixed.bat repo add example https://example.com
+          set "RC3=%ERRORLEVEL%"
+          set "C3="
+          if exist "%COUNTER_FILE%" set /p C3=<"%COUNTER_FILE%"
+          set "LINES="
+          if exist "%LOG_FILE%" for /f %%c in ('findstr /b /c:"repo add" "%LOG_FILE%" ^| find /c /v ""') do set "LINES=%%c"
+          echo fixed failures=10 exits=%RC1%,%RC2%,%RC3%
+          echo fixed failures=10 counters=%C1%,%C2%,%C3%
+          echo fixed failures=10 log lines=%LINES%
+          if not "%RC1%"=="1" ( echo expected first call to fail & exit /b 1 )
+          if not "%RC2%"=="1" ( echo expected second call to fail & exit /b 1 )
+          if not "%RC3%"=="1" ( echo expected third call to fail & exit /b 1 )
+          if not "%C1%"=="1" ( echo expected counter 1 after first call & exit /b 1 )
+          if not "%C2%"=="2" ( echo expected counter 2 after second call & exit /b 1 )
+          if not "%C3%"=="3" ( echo expected counter 3 after third call & exit /b 1 )
+          if not "%LINES%"=="3" ( echo expected three logged invocations & exit /b 1 )
+          echo == fixed failures=10 passed ==
+          exit /b 0
+
+      - name: Invocation logs
+        shell: cmd
+        run: |
+          echo == fixed1.log ==
+          type "%CD%\fixed1.log" 2>nul
+          echo == fixed10.log ==
+          type "%CD%\fixed10.log" 2>nul
